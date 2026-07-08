@@ -1,0 +1,320 @@
+{
+  "info": {
+    "_postman_id": "b7e2f7b0-3a9d-4c1e-9d2a-6f0c2e4a1234",
+    "name": "TPE4-DW Backend API",
+    "description": "Postman collection for the TPE#4_DW backend API (auth + usuarios). Generated from the actual Express routes/controllers in backend/src/routes and backend/src/controllers.\n\nFolders:\n- Auth: register/login (both capture the JWT into the {{token}} collection variable automatically) and the protected /auth/me endpoint.\n- Usuarios: CRUD endpoints, all protected with verifyToken middleware, sending Authorization: Bearer {{token}}.\n- Auth (browser only): Google OAuth endpoints, which cannot be exercised from Postman because they perform a real browser redirect flow against Google.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "pm.test(\"Response has token\", function () {",
+                  "    pm.expect(jsonData).to.have.property(\"token\");",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"token\", jsonData.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Perez\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registers a new usuario (nombre, email, password required). Returns { token, usuario }. The test script stores the returned token in the {{token}} collection variable so it can be reused by the protected requests in the Usuarios folder."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "",
+                  "pm.test(\"Response has token\", function () {",
+                  "    pm.expect(jsonData).to.have.property(\"token\");",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"token\", jsonData.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Logs in with email/password. Returns { token, usuario }. The test script stores the returned token in the {{token}} collection variable so it can be reused by the protected requests in the Usuarios folder. Accounts created via Google OAuth have no password and will get a 400 here."
+          },
+          "response": []
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Returns the currently authenticated usuario, resolved from the JWT via the verifyToken middleware. Requires Authorization: Bearer {{token}} (run Register or Login first to populate {{token}})."
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints backed by authRoutes.js / authController.js."
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "List Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Returns the full list of usuarios. Protected by verifyToken (router.use(verifyToken) in usuarioRoutes.js)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Usuario by Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Usuario Mongo _id"
+                }
+              ]
+            },
+            "description": "Returns a single usuario by id. 404 if not found. Protected by verifyToken."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Perez Actualizado\",\n  \"email\": \"juan.perez@example.com\",\n  \"password\": \"NewPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Usuario Mongo _id"
+                }
+              ]
+            },
+            "description": "Partially updates nombre/email/password (only provided fields are applied). Returns the updated usuario without the password field. Protected by verifyToken."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": "Usuario Mongo _id"
+                }
+              ]
+            },
+            "description": "Deletes a usuario by id. Returns { message: \"Usuario eliminado\" }. Protected by verifyToken."
+          },
+          "response": []
+        }
+      ],
+      "description": "CRUD endpoints backed by usuarioRoutes.js / usuarioController.js. All routes require Authorization: Bearer {{token}} because usuarioRoutes.js applies router.use(verifyToken) to the whole router."
+    },
+    {
+      "name": "Auth (browser only)",
+      "item": [
+        {
+          "name": "Google OAuth - NOT TESTABLE FROM POSTMAN (open in browser)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google"
+              ]
+            },
+            "description": "IMPORTANT: This endpoint cannot be tested from Postman.\n\nGET /auth/google kicks off Passport's Google OAuth flow (passport.authenticate(\"google\", { scope: [\"profile\", \"email\"], session: false })), which 302-redirects to Google's real login/consent screen. Google then redirects back to GET /auth/google/callback, which runs passport.authenticate(\"google\", ...) again followed by the googleCallback controller, and finally 302-redirects to `${FRONTEND_URL}/oauth-callback?token=...`.\n\nBecause this requires an interactive Google login/consent screen and real redirects, Postman's request runner cannot complete it (it does not drive a browser or log into a Google account). To actually exercise this flow:\n1. Start the backend.\n2. Open {{baseUrl}}/auth/google directly in a normal web browser (not Postman).\n3. Log in / consent with a Google account.\n4. Google redirects to /auth/google/callback on the backend, which redirects to the frontend with ?token=<jwt> in the query string.\n\nUse the resulting token manually (e.g. paste it into the {{token}} collection variable) if you want to call the protected endpoints in this collection using a Google-authenticated session."
+          },
+          "response": []
+        }
+      ],
+      "description": "Google OAuth endpoints (GET /auth/google and GET /auth/google/callback) defined in authRoutes.js. These implement a real browser redirect flow via Passport's google strategy and cannot be executed by Postman's request runner. See the description on the request in this folder for how to test them manually in a browser."
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
